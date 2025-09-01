@@ -1,0 +1,40 @@
+pharma_web/
+├── manage.py
+├── pharma_web/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+├── core/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── migrations/
+│   ├── models.py
+│   ├── tests.py
+│   ├── urls.py
+│   ├── views.py
+│   ├── forms.py
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── login.html
+│   │   ├── admin_panel.html
+│   │   ├── buy_medicine.html
+│   │   ├── cart.html
+│   │   ├── guide.html
+│   │   ├── home.html
+│   │   ├── order_history.html
+│   │   ├── profile.html
+│   │   ├── register.html
+│   │   ├── support.html
+│   │   
+│   │   
+│   │   
+│   │   └── etc.
+│   └── static/
+│       ├── css/
+│       │   └── styles.css  # From _inject_ui_css
+│       └── images/  # Medicine images
+├── medicines.json  # Data file
+└── requirements.txt

@@ -1,0 +1,1 @@
+I'm using python... We're gonna learn Django. Django is the most powerful.
