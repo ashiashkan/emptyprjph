@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<h5 class="mb-3">سوابق سفارش</h5>
+{% if orders %}
+<table class="table table-striped">
+  <thead><tr><th>#</th><th>تاریخ</th><th>مبلغ</th><th>ارز</th><th>آدرس</th><th>وضعیت</th></tr></thead>
+  <tbody>
+  {% for o in orders %}
+    <tr>
+      <td>{{ o.id }}</td>
+      <td>{{ o.created_at|date:"Y-m-d H:i" }}</td>
+      <td>${{ o.total_amount }}</td>
+      <td>{{ o.currency }}</td>
+      <td class="small">{{ o.crypto_address|truncatechars:24 }}</td>
+      <td><span class="badge bg-secondary">{{ o.status }}</span></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <div class="alert alert-info">هنوز سفارشی ثبت نکرده‌اید.</div>
+{% endif %}
+{% endblock %}

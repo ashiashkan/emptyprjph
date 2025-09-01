@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+
+  <!-- عنوان اصلی -->
+  <div class="text-center mb-5">
+    <h1 class="fw-bold text-primary display-5">💊 داروخانه آنلاین</h1>
+    <p class="text-muted fs-5">جستجو، مشاهده و خرید داروهای معتبر در دسته‌بندی‌های متنوع</p>
+  </div>
+
+  <!-- آکاردئون گروه‌های دارویی -->
+  <div class="accordion" id="medicineAccordion">
+    {% for group in groups %}
+      <div class="accordion-item mb-4 border-0 shadow rounded-3 overflow-hidden">
+        <h2 class="accordion-header" id="heading-{{ group.id }}">
+          <button class="accordion-button collapsed fw-bold bg-gradient bg-primary text-white fs-5 py-3"
+                  type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#collapse-{{ group.id }}" 
+                  aria-expanded="false" 
+                  aria-controls="collapse-{{ group.id }}">
+            {{ group.name }}
+          </button>
+        </h2>
+
+        <!-- لیست محصولات -->
+        <div id="collapse-{{ group.id }}" 
+             class="accordion-collapse collapse" 
+             aria-labelledby="heading-{{ group.id }}" 
+             data-bs-parent="#medicineAccordion">
+          <div class="accordion-body bg-light">
+
+            <div class="row g-4">
+              {% for variant in group.variants %}
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                  <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
+
+                    <!-- عکس + قیمت -->
+                    <div class="position-relative">
+                      {% if variant.image %}
+                        <img src="{{ variant.image }}" 
+                             class="card-img-top img-fluid product-img" 
+                             alt="{{ variant.name }}">
+                      {% else %}
+                        <img src="{% static 'images/default.jpg' %}" 
+                             class="card-img-top img-fluid product-img" 
+                             alt="no image">
+                      {% endif %}
+                      <span class="badge bg-success position-absolute top-0 end-0 m-2 shadow px-3 py-2 fs-6 rounded-pill">
+                        ${{ variant.price }}
+                      </span>
+                    </div>
+
+                    <!-- بدنه کارت -->
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title fw-bold text-dark">{{ variant.name }}</h5>
+                      <p class="card-text text-muted small mb-3">
+                        {{ variant.description|default:"بدون توضیحات" }}
+                      </p>
+
+                      <!-- قیمت -->
+                      <p class="fw-bold text-primary mb-2 fs-5">
+                        💵 ${{ variant.price }}
+                      </p>
+
+                      <!-- فرم افزودن به سبد خرید -->
+                      <form method="post" class="mt-auto">
+                        {% csrf_token %}
+                        <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                        <div class="input-group input-group-sm mb-2">
+                          <input type="number" name="qty" value="1" min="1" 
+                                 class="form-control text-center rounded-pill">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm fw-bold">
+                          🛒 افزودن به سبد خرید
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <p class="text-center text-muted">هیچ محصولی در این گروه موجود نیست.</p>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-danger text-center fw-bold fs-4">هیچ گروه دارویی یافت نشد.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- استایل اختصاصی -->
+<style>
+  /* کارت محصولات */
+  .hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .hover-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0px 12px 30px rgba(0,0,0,0.2);
+  }
+
+  /* عکس محصول */
+  .product-img {
+    height: 200px;
+    object-fit: cover;
+  }
+
+  /* آکاردئون */
+  .accordion-button:not(.collapsed) {
+    background: linear-gradient(135deg, #0d6efd, #0b5ed7) !important;
+    color: #fff !important;
+    font-size: 1.1rem;
+  }
+  .accordion-button:focus {
+    box-shadow: none !important;
+  }
+</style>
+{% endblock %}

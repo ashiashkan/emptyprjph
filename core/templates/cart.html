@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h5 class="mb-3">سبد خرید</h5>
+{% if cart %}
+<table class="table align-middle">
+  <thead><tr><th>کالا</th><th>تعداد</th><th>قیمت</th><th>جمع</th><th></th></tr></thead>
+  <tbody>
+  {% for item in cart %}
+    <tr>
+      <td>{{ item.name }}</td>
+      <td>{{ item.qty }}</td>
+      <td>${{ item.price }}</td>
+      <td>${{ item.qty|floatformat:0|add:'0'|floatformat:0 }}</td>
+      <td>
+        <form method="post" class="d-inline">{% csrf_token %}
+          <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+          <button name="action" value="remove" class="btn btn-sm btn-outline-danger">حذف</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<div class="d-flex justify-content-between">
+  <div class="fs-5">مبلغ کل: <strong>${{ total }}</strong></div>
+  <form method="post">{% csrf_token %}
+    <button name="action" value="checkout" class="btn btn-success">ادامه به پرداخت</button>
+  </form>
+</div>
+{% else %}
+  <div class="alert alert-info">سبد خرید شما خالی است.</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<h5 class="mb-3">پرداخت</h5>
+<div class="alert alert-secondary">مبلغ فاکتور: <strong>${{ total }}</strong></div>
+<div class="row g-3">
+  {% for sym, addr in addresses.items %}
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">{{ sym }}</div>
+        <div class="card-body text-center">
+          <img alt="{{ sym }} QR" class="img-fluid mb-2" src="data:image/png;base64,{{ qr_codes[sym] }}">
+          <div class="small text-muted">{{ addr }}</div>
+        </div>
+        <div class="card-footer">
+          <form method="post">{% csrf_token %}
+            <input type="hidden" name="currency" value="{{ sym }}">
+            <button class="btn btn-primary w-100">ثبت سفارش با {{ sym }}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+<p class="mt-3 text-muted small">* این پرداخت صرفاً نمایشی است (بدون اتصال به بلاک‌چین). مدیر می‌تواند وضعیت سفارش را در پنل ادمین تغییر دهد.</p>
+{% endblock %}
