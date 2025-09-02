@@ -5,24 +5,69 @@ from django.conf import settings
 import json
 from pathlib import Path
 
+from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
+# core/models.py
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 class CustomUser(AbstractUser):
-    phone = models.CharField(max_length=15, unique=True)
-    address = models.TextField(blank=True, null=True)
-    language = models.CharField(max_length=5, default='fa')
-    logout_history = models.JSONField(default=list, blank=True)
+    # اگر فقط می‌خوای phone اضافه کنی:
+    phone = models.CharField(max_length=32, blank=True, null=True, unique=True)
 
     def __str__(self):
-        return self.phone or self.username
+        return self.username or self.phone or f"user-{self.id}"
 
+
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
+    phone = models.CharField(max_length=32, unique=True)
+    first_name = models.CharField(max_length=120, blank=True)
+    last_name = models.CharField(max_length=120, blank=True)
+    address = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.phone or self.user.username
+
+PAYMENT_CHOICES = [
+    ('TRX', 'TRX'),
+    ('USDT', 'USDT'),
+    ('BTC', 'BTC'),
+    ('ETH', 'ETH'),
+    ('BNB', 'BNB'),
+]
+
+ORDER_STATUS = [
+    ('PENDING', 'در انتظار پرداخت'),
+    ('PAID', 'پرداخت شده'),
+    ('CANCELLED', 'لغو شده'),
+]
 
 class Order(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    items = models.JSONField()
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    currency = models.CharField(max_length=10)
-    status = models.CharField(max_length=20, default='PENDING')
-    crypto_address = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, choices=PAYMENT_CHOICES, default='USDT')
+    deposit_address = models.CharField(max_length=256, blank=True)
+    status = models.CharField(max_length=16, choices=ORDER_STATUS, default='PENDING')
+    created_at = models.DateTimeField(default=timezone.now)
+    metadata = models.JSONField(default=dict, blank=True)  # ذخیره سبد یا فیلدهای اضافی
+
+    def __str__(self):
+        return f"Order {self.order_id} ({self.user.username})"
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    name = models.CharField(max_length=255)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def subtotal(self):
+        return self.unit_price * self.quantity
 
 
 # ---------------------------

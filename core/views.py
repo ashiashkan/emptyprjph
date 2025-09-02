@@ -7,15 +7,28 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
-from .forms import LoginForm, RegisterForm, AddressForm
-from .models import Order, MEDICINES_DATA, TRANSLATIONS , MEDICINE_IMAGES
+from .forms import LoginForm, PhoneLoginForm, RegisterForm, AddressForm
+from .models import Customer, Order, MEDICINES_DATA, TRANSLATIONS , MEDICINE_IMAGES
 import json, time, base64, uuid
 from io import BytesIO
 import qrcode
 from pathlib import Path
-
-
-
+from django.contrib.auth.models import User
+from django.views.decorators.http import require_POST
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages, auth
+from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse
+from django.http import JsonResponse, HttpResponseForbidden
+from django.contrib.auth.models import User
+from decimal import Decimal
+import qrcode
+import io
+import base64
+from .models import Customer, Order, OrderItem
+from .forms import PhoneLoginForm, RegisterForm, AddressForm
+import uuid
+from django.views.decorators.http import require_POST
 
 
 # فایل داروها
@@ -132,6 +145,166 @@ def buy_medicine(request):
 
     return render(request, "buy_medicine.html", {"groups": groups})
 
+# --- helpers ---
+def generate_deposit_address(currency: str, user_identifier: str):
+    """
+    Placeholder: تولید یک آدرس یکتا برای پرداخت.
+    این تابع را جایگزین کن با تولید آدرس واقعی (web3/tronpy/bitcoinlib) در محیط production.
+    """
+    return f"{currency}_DEPOSIT_{user_identifier[:8]}_{uuid.uuid4().hex[:12]}"
+
+def create_qr_base64(data: str):
+    img = qrcode.make(data)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode('ascii')
+
+# --- auth / profile ---
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('core:cart')
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data['phone'].strip()
+            password = form.cleaned_data['password']
+            first = form.cleaned_data.get('first_name', '')
+            last = form.cleaned_data.get('last_name', '')
+            address = form.cleaned_data.get('address', '')
+
+            # create User with username as phone
+            if User.objects.filter(username=phone).exists():
+                messages.warning(request, "این شماره قبلاً ثبت شده. لطفاً وارد شوید.")
+                return redirect('core:login')
+            user = User.objects.create_user(username=phone)
+            user.set_password(password)
+            user.first_name = first
+            user.last_name = last
+            user.save()
+
+            Customer.objects.create(user=user, phone=phone, first_name=first, last_name=last, address=address)
+            login(request, user)
+            messages.success(request, "ثبت‌نام با موفقیت انجام شد و وارد شدید.")
+            return redirect('core:checkout')
+    else:
+        form = RegisterForm()
+    return render(request, 'core/register.html', {'form': form})
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('core:cart')
+    if request.method == 'POST':
+        form = PhoneLoginForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data['phone'].strip()
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=phone, password=password)
+            if user:
+                login(request, user)
+                messages.success(request, "ورود موفق. خوش آمدید.")
+                next_url = request.GET.get('next') or reverse('core:checkout')
+                return redirect(next_url)
+            else:
+                messages.error(request, "شماره یا رمز اشتباه است.")
+    else:
+        form = PhoneLoginForm()
+    return render(request, 'core/login.html', {'form': form})
+
+def profile_view(request):
+    if not request.user.is_authenticated:
+        return redirect('core:login')
+    customer, _ = Customer.objects.get_or_create(user=request.user, phone=request.user.username)
+    if request.method == 'POST':
+        form = AddressForm(request.POST)
+        if form.is_valid():
+            customer.first_name = form.cleaned_data.get('first_name', '')
+            customer.last_name = form.cleaned_data.get('last_name', '')
+            customer.address = form.cleaned_data.get('address', '')
+            customer.save()
+            messages.success(request, "اطلاعات ویرایش شد.")
+            return redirect('core:profile')
+    else:
+        form = AddressForm(initial={'first_name': customer.first_name, 'last_name': customer.last_name, 'address': customer.address})
+    return render(request, 'core/profile.html', {'form': form, 'customer': customer})
+
+def logout_view(request):
+    auth.logout(request)
+    messages.success(request, "شما خارج شدید.")
+    return redirect('core:login')
+
+# --- cart / checkout ---
+def cart_view(request):
+    # سبد در session نگهداری شده: session['cart'] = [{'name':..., 'price': '12.50', 'qty': 2}, ...]
+    cart = request.session.get('cart', [])
+    total = sum(Decimal(item['price']) * int(item.get('qty', 1)) for item in cart) if cart else Decimal('0.00')
+    return render(request, 'core/cart.html', {'cart': cart, 'total': total})
+
+def add_to_cart_view(request):
+    # نمونه endpoint برای افزودن (اگر لازم باشه)
+    if request.method != 'POST':
+        return HttpResponseForbidden()
+    name = request.POST.get('name')
+    price = request.POST.get('price', '0')
+    qty = int(request.POST.get('qty', 1))
+    cart = request.session.get('cart', [])
+    cart.append({'name': name, 'price': str(price), 'qty': qty})
+    request.session['cart'] = cart
+    return JsonResponse({'ok': True, 'cart_count': len(cart)})
+
+def checkout_view(request):
+    # اگر کاربر لاگین نیست: redirect به صفحه لاگین با next
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('core:login')}?next={reverse('core:checkout')}")
+    # اطمینان از داشتن آدرس کاربر
+    customer, _ = Customer.objects.get_or_create(user=request.user, phone=request.user.username)
+    cart = request.session.get('cart', [])
+    if not cart:
+        messages.info(request, "سبد شما خالی است.")
+        return redirect('core:cart')
+    # اگر آدرس خالی هست، هدایت به صفحه پروفایل برای تکمیل
+    if not customer.address:
+        messages.warning(request, "قبل از پرداخت، لطفاً آدرس و اطلاعات خود را تکمیل کنید.")
+        return redirect('core:profile')
+
+    total_usd = sum(Decimal(item['price']) * int(item.get('qty', 1)) for item in cart)
+    if request.method == 'POST':
+        currency = request.POST.get('currency', 'USDT')  # انتخاب کاربر
+        # ایجاد سفارش
+        order = Order.objects.create(user=request.user, amount_usd=total_usd, currency=currency, metadata={'cart_snapshot': cart})
+        # تولید آدرس پرداخت
+        deposit_address = generate_deposit_address(currency, str(order.order_id))
+        order.deposit_address = deposit_address
+        order.save()
+        # ایجاد آیتم‌ها
+        for it in cart:
+            OrderItem.objects.create(order=order, name=it['name'], unit_price=Decimal(it['price']), quantity=int(it.get('qty', 1)))
+        # پاک کردن سبد session (یا نگه‌داشتن در صورت نیاز)
+        # request.session['cart'] = []
+        return redirect('core:payment', order_id=order.order_id)
+
+    # نمایش فرم انتخاب ارز و خلاصه فاکتور
+    return render(request, 'core/checkout.html', {'customer': customer, 'cart': cart, 'total': total_usd, 'payment_options': ['TRX','USDT','BTC','ETH','BNB']})
+
+def payment_view(request, order_id):
+    order = get_object_or_404(Order, order_id=order_id)
+    items = order.items.all()
+    qr_b64 = create_qr_base64(order.deposit_address)
+    return render(request, 'core/payment.html', {'order': order, 'items': items, 'qr_b64': qr_b64})
+
+@require_POST
+def check_payment_ajax(request, order_id):
+    """
+    نمونه ساده: در اینجا فقط وضعیت را از فیلد order.status می‌خوانیم.
+    در محیط واقعی باید با بلاکچین/اپی‌ها بررسی شود و پس از تایید، وضعیت order را به PAID تغییر دهیم.
+    """
+    order = get_object_or_404(Order, order_id=order_id)
+    # TODO: call real check_payment(order.deposit_address, order.currency, order.amount_usd)
+    if order.status == 'PAID':
+        return JsonResponse({'paid': True})
+    else:
+        # برای نمونه: برگشت وضعیت pending
+        return JsonResponse({'paid': False, 'status': order.status})
 
 
 

@@ -1,40 +1,51 @@
-# ... کدهای قبلی ...
+from django.db import models
+from django.contrib.auth.models import User
+from django.utils import timezone
+import uuid
 
-class CartView(View):
-    def get(self, request):
-        lang = request.session.get('language', 'fa')
-        cart = request.session.get('cart', [])
-        total = sum(float(i.get('price',0))*int(i.get('qty',1)) for i in cart)
-        return render(request, 'cart.html', {'cart': cart, 'total': total, 'lang': lang})
+class Customer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
+    phone = models.CharField(max_length=32, unique=True)
+    first_name = models.CharField(max_length=120, blank=True)
+    last_name = models.CharField(max_length=120, blank=True)
+    address = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def post(self, request):
-        action = request.POST.get('action')
-        cart = request.session.get('cart', [])
-        
-        if action == 'remove':
-            idx = int(request.POST.get('index', -1))
-            if 0 <= idx < len(cart):
-                del cart[idx]
-                messages.success(request, "محصول از سبد خرید حذف شد.")
-                
-        elif action == 'update':
-            idx = int(request.POST.get('index', -1))
-            qty = int(request.POST.get('qty', 1))
-            if 0 <= idx < len(cart) and qty > 0:
-                cart[idx]['qty'] = qty
-                messages.success(request, "تعداد محصول به‌روزرسانی شد.")
-                
-        elif action == 'checkout':
-            if not request.user.is_authenticated:
-                messages.warning(request, 'ابتدا وارد شوید')
-                return redirect('login')
-            if not getattr(request.user, 'address', None):
-                messages.warning(request, get_text(request.session.get('language','fa'), 'register_first'))
-                return redirect('profile')
-            return redirect('payment')
-            
-        request.session['cart'] = cart
-        request.session.modified = True
-        return redirect('cart')
+    def __str__(self):
+        return self.phone or self.user.username
 
-# ... بقیه کدها ...
+PAYMENT_CHOICES = [
+    ('TRX', 'TRX'),
+    ('USDT', 'USDT'),
+    ('BTC', 'BTC'),
+    ('ETH', 'ETH'),
+    ('BNB', 'BNB'),
+]
+
+ORDER_STATUS = [
+    ('PENDING', 'در انتظار پرداخت'),
+    ('PAID', 'پرداخت شده'),
+    ('CANCELLED', 'لغو شده'),
+]
+
+class Order(models.Model):
+    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=8, choices=PAYMENT_CHOICES, default='USDT')
+    deposit_address = models.CharField(max_length=256, blank=True)
+    status = models.CharField(max_length=16, choices=ORDER_STATUS, default='PENDING')
+    created_at = models.DateTimeField(default=timezone.now)
+    metadata = models.JSONField(default=dict, blank=True)  # ذخیره سبد یا فیلدهای اضافی
+
+    def __str__(self):
+        return f"Order {self.order_id} ({self.user.username})"
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    name = models.CharField(max_length=255)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def subtotal(self):
+        return self.unit_price * self.quantity
