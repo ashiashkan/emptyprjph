@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+import io
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -7,7 +8,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
-from .forms import PhoneLoginForm, RegisterForm, AddressForm
+from .forms import PhoneLoginForm, RegisterForm, AddressForm, LoginForm
 from .models import Customer, Order, MEDICINES_DATA, TRANSLATIONS , MEDICINE_IMAGES
 import json, time, base64, uuid
 from io import BytesIO
