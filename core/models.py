@@ -11,11 +11,11 @@ import uuid
 # core/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 from django.contrib.auth import get_user_model
-User = get_user_model()
+
 
 class CustomUser(AbstractUser):
-    # اگر فقط می‌خوای phone اضافه کنی:
     phone = models.CharField(max_length=32, blank=True, null=True, unique=True)
 
     def __str__(self):
@@ -23,7 +23,7 @@ class CustomUser(AbstractUser):
 
 
 class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')
     phone = models.CharField(max_length=32, unique=True)
     first_name = models.CharField(max_length=120, blank=True)
     last_name = models.CharField(max_length=120, blank=True)
@@ -49,7 +49,7 @@ ORDER_STATUS = [
 
 class Order(models.Model):
     order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
     amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
     currency = models.CharField(max_length=8, choices=PAYMENT_CHOICES, default='USDT')
     deposit_address = models.CharField(max_length=256, blank=True)
