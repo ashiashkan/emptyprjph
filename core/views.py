@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
-from .forms import LoginForm, PhoneLoginForm, RegisterForm, AddressForm
+from .forms import PhoneLoginForm, RegisterForm, AddressForm
 from .models import Customer, Order, MEDICINES_DATA, TRANSLATIONS , MEDICINE_IMAGES
 import json, time, base64, uuid
 from io import BytesIO
@@ -15,20 +15,14 @@ import qrcode
 from pathlib import Path
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_POST
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages, auth
 from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponseForbidden
-from django.contrib.auth.models import User
 from decimal import Decimal
-import qrcode
-import io
-import base64
-from .models import Customer, Order, OrderItem
-from .forms import PhoneLoginForm, RegisterForm, AddressForm
-import uuid
-from django.views.decorators.http import require_POST
+from .models import OrderItem
+
+
 
 
 # فایل داروها
