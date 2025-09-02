@@ -8,19 +8,23 @@
         <form method="post">{% csrf_token %}
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">شماره موبایل</label>
+              <label class="form-phone">شماره موبایل</label>
               <input type="text" name="phone" class="form-control" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label">رمز عبور</label>
-              <input type="password" name="password" class="form-control" required>
+              <label class="form-password1">رمز عبور</label>
+              <input type="password" name="password1" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-password2">تکرار رمز عبور</label>
+              <input type="password" name="password2" class="form-control" required>
             </div>
             <div class="col-12">
-              <label class="form-label">آدرس</label>
+              <label class="form-address">آدرس</label>
               <textarea name="address" class="form-control" rows="2"></textarea>
             </div>
             <div class="col-md-4">
-              <label class="form-label">زبان</label>
+              <label class="form-language">زبان</label>
               <select name="language" class="form-select">
                 <option value="fa" selected>فارسی</option>
                 <option value="en">English</option>

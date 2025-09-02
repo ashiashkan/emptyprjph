@@ -1,51 +1,44 @@
-from django.db import models
-from django.contrib.auth.models import User
+import io
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.views import View
+from django.contrib import messages
+from django.conf import settings
+from django.utils.safestring import mark_safe
+
+from .forms import RegisterForm, AddressForm, LoginForm  # PhoneLoginForm رو حذف کن – فقط LoginForm
+
+from .models import Order, MEDICINES_DATA, TRANSLATIONS, MEDICINE_IMAGES
+import json
+from pathlib import Path
+from django.http import JsonResponse
+from decimal import Decimal
+import qrcode
+from io import BytesIO
+import base64
 from django.utils import timezone
-import uuid
+from django.views.decorators.http import require_POST
 
-class Customer(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
-    phone = models.CharField(max_length=32, unique=True)
-    first_name = models.CharField(max_length=120, blank=True)
-    last_name = models.CharField(max_length=120, blank=True)
-    address = models.TextField(blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
+# بقیه کد views.py مثل قبل (HomeView, LoginView, etc.)
+# در LoginView، از form = LoginForm() استفاده کن، نه PhoneLoginForm
+class LoginView(View):
+    def get(self, request):
+        form = LoginForm()
+        return render(request, 'login.html', {'form': form})
 
-    def __str__(self):
-        return self.phone or self.user.username
+    def post(self, request):
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data['phone']
+            password = form.cleaned_data['password']
+            user = authenticate(request, phone=phone, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'خوش آمدید!')
+                return redirect('home')
+            else:
+                messages.error(request, 'شماره موبایل یا رمز عبور اشتباه است.')
+        return render(request, 'login.html', {'form': form})
 
-PAYMENT_CHOICES = [
-    ('TRX', 'TRX'),
-    ('USDT', 'USDT'),
-    ('BTC', 'BTC'),
-    ('ETH', 'ETH'),
-    ('BNB', 'BNB'),
-]
-
-ORDER_STATUS = [
-    ('PENDING', 'در انتظار پرداخت'),
-    ('PAID', 'پرداخت شده'),
-    ('CANCELLED', 'لغو شده'),
-]
-
-class Order(models.Model):
-    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
-    currency = models.CharField(max_length=8, choices=PAYMENT_CHOICES, default='USDT')
-    deposit_address = models.CharField(max_length=256, blank=True)
-    status = models.CharField(max_length=16, choices=ORDER_STATUS, default='PENDING')
-    created_at = models.DateTimeField(default=timezone.now)
-    metadata = models.JSONField(default=dict, blank=True)  # ذخیره سبد یا فیلدهای اضافی
-
-    def __str__(self):
-        return f"Order {self.order_id} ({self.user.username})"
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    name = models.CharField(max_length=255)
-    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
-    quantity = models.PositiveIntegerField(default=1)
-
-    def subtotal(self):
-        return self.unit_price * self.quantity
+# بقیه ویوها مثل RegisterView (که از RegisterForm استفاده می‌کنه) بدون تغییر

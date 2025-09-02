@@ -6,7 +6,7 @@ from .views import (
     ProfileView, OrderHistoryView, AdminPanelView,
     GuideView, SupportView, ChangeLanguageView
 )
-app_name = "core"
+
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),

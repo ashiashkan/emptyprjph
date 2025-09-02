@@ -1,27 +1,27 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 import json
 from pathlib import Path
-
-from django.contrib.auth.models import User
 from django.utils import timezone
 import uuid
-# core/models.py
-from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from decimal import Decimal
 
 
 class CustomUser(AbstractUser):
-    phone = models.CharField(max_length=32, blank=True, null=True, unique=True)
+    username = None  # غیرفعال کردن فیلد پیش‌فرض username
+    phone = models.CharField(max_length=15, unique=True)
+    address = models.TextField(blank=True, null=True)
+    language = models.CharField(max_length=5, default='fa')
+    logout_history = models.JSONField(default=list, blank=True)
+
+    USERNAME_FIELD = 'phone'  # استفاده از phone برای احراز هویت
+    REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.username or self.phone or f"user-{self.id}"
-
+        return self.phone
 
 class Customer(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')

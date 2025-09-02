@@ -1,27 +1,41 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
 
-class PhoneLoginForm(forms.Form):
-    phone = forms.CharField(label="شماره تلفن", max_length=32)
-    password = forms.CharField(label="رمز عبور", widget=forms.PasswordInput)
+User = get_user_model()
 
-class RegisterForm(forms.Form):
-    phone = forms.CharField(label="شماره تلفن", max_length=32)
-    password = forms.CharField(label="رمز عبور", widget=forms.PasswordInput)
-    confirm_password = forms.CharField(label="تکرار رمز عبور", widget=forms.PasswordInput)
-    first_name = forms.CharField(label="نام", max_length=120, required=False)
-    last_name = forms.CharField(label="نام خانوادگی", max_length=120, required=False)
-    address = forms.CharField(label="آدرس", widget=forms.Textarea, required=False)
+class LoginForm(forms.Form):
+    phone = forms.CharField(max_length=20, label='شماره موبایل')
+    password = forms.CharField(widget=forms.PasswordInput, label='رمز عبور')
+
+class RegisterForm(UserCreationForm):
+    phone = forms.CharField(max_length=15, label='شماره موبایل')
+    address = forms.CharField(widget=forms.Textarea, required=False, label='آدرس')
+    language = forms.ChoiceField(
+        choices=[('fa', 'فارسی'), ('en', 'English'), ('tr', 'Türkçe'), ('ar', 'العربية')],
+        initial='fa',
+        label='زبان'
+    )
+    
+    class Meta:
+        model = User
+        fields = ['phone', 'password1', 'password2', 'address', 'language']
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if User.objects.filter(phone=phone).exists():
+            raise forms.ValidationError("این شماره تلفن قبلاً ثبت شده است")
+        return phone
 
     def clean(self):
-        cleaned = super().clean()
-        p = cleaned.get('password')
-        cp = cleaned.get('confirm_password')
-        if p and cp and p != cp:
-            raise forms.ValidationError("رمزها یکسان نیستند.")
-        return cleaned
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("رمزهای عبور مطابقت ندارند")
+        return cleaned_data
 
-class AddressForm(forms.Form):
-    first_name = forms.CharField(label="نام", max_length=120, required=False)
-    last_name = forms.CharField(label="نام خانوادگی", max_length=120, required=False)
-    address = forms.CharField(label="آدرس کامل", widget=forms.Textarea)
+class AddressForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['address']
