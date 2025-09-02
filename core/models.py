@@ -13,6 +13,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 
 class CustomUser(AbstractUser):
@@ -48,9 +49,9 @@ ORDER_STATUS = [
 ]
 
 class Order(models.Model):
-    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, null=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='orders')
-    amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     currency = models.CharField(max_length=8, choices=PAYMENT_CHOICES, default='USDT')
     deposit_address = models.CharField(max_length=256, blank=True)
     status = models.CharField(max_length=16, choices=ORDER_STATUS, default='PENDING')
