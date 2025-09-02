@@ -278,6 +278,7 @@ class LogoutView(View):
             messages.error(request, get_text(request.session.get('language','fa'), 'logout_blocked', minutes=remaining))
         return redirect('home')
 
+
 class BuyMedicineView(View):
     def get(self, request):
         lang = request.session.get('language', 'fa')
@@ -299,7 +300,6 @@ class BuyMedicineView(View):
             for gkey, group in group_dict.items():
                 name = group.get(f'name_{lang}') or group.get('name_en') or gkey
 
-                # پیدا کردن کلید محصولات (variants, faroxys, tramadols, ...)
                 variant_dict = None
                 for k, v in group.items():
                     if isinstance(v, dict):
@@ -313,7 +313,6 @@ class BuyMedicineView(View):
                         vdesc = v.get(f'description_{lang}') or v.get('description_en') or ''
                         price = float(v.get('price', 0))
 
-                        # پیدا کردن عکس
                         img_path = MEDICINE_IMAGES.get(vid, "")
                         if img_path:
                             img_url = settings.STATIC_URL + img_path
@@ -334,8 +333,81 @@ class BuyMedicineView(View):
                     'variants': variants
                 })
 
-        return render(request, 'buy_medicine.html', {'groups': groups})
+        return render(request, 'buy_medicine.html', {
+            'groups': groups,
+            'messages': messages.get_messages(request)  # اضافه کردن پیام‌ها به context
+        })
 
+    def post(self, request):
+        variant_id = request.POST.get("variant_id")
+        qty = int(request.POST.get("qty", 1))
+        
+        # پیدا کردن محصول انتخابی
+        selected_variant = None
+        all_group_keys = [
+            "medicine_groups", "faroxy_groups", "tramadol_groups",
+            "methadone_groups", "methylphenidate_groups", "phyto_groups",
+            "seretide_groups", "modafinil_groups", "monjaro_groups",
+            "insuline_groups", "soma_groups", "biobepa_groups",
+            "warfarine_groups", "gardasil_groups", "rogam_groups",
+            "Aminoven_groups", "Nexium_groups", "Exelon_groups",
+            "testestron_groups", "zithromax_groups", "Liskantin_groups",
+            "chimi_groups"
+        ]
+
+        for group_key in all_group_keys:
+            group_dict = MEDICINES_DATA.get(group_key, {})
+            for gkey, group in group_dict.items():
+                variant_dict = None
+                for k, v in group.items():
+                    if isinstance(v, dict):
+                        variant_dict = v
+                        break
+                
+                if variant_dict and variant_id in variant_dict:
+                    v = variant_dict[variant_id]
+                    lang = request.session.get('language', 'fa')
+                    vname = v.get(f'name_{lang}') or v.get('name_en') or variant_id
+                    selected_variant = {
+                        'id': variant_id,
+                        'name': vname,
+                        'price': float(v.get('price', 0)),
+                        'image': MEDICINE_IMAGES.get(variant_id, "")
+                    }
+                    break
+            if selected_variant:
+                break
+
+        if not selected_variant:
+            messages.error(request, "داروی مورد نظر یافت نشد.")
+            return redirect("buy_medicine")
+
+        # سبد خرید در session
+        cart = request.session.get("cart", [])
+        
+        # بررسی اینکه محصول قبلاً توی سبد هست یا نه
+        found = False
+        for item in cart:
+            if item["id"] == variant_id:
+                item["qty"] += qty
+                found = True
+                break
+
+        if not found:
+            cart.append({
+                "id": variant_id,
+                "name": selected_variant["name"],
+                "price": float(selected_variant["price"]),
+                "qty": qty,
+                "image": selected_variant.get("image"),
+            })
+
+        # ذخیره در session
+        request.session["cart"] = cart
+        request.session.modified = True
+
+        messages.success(request, f"{selected_variant['name']} با موفقیت به سبد خرید اضافه شد.")
+        return redirect("buy_medicine")
 
 
 class CartView(View):
@@ -348,10 +420,20 @@ class CartView(View):
     def post(self, request):
         action = request.POST.get('action')
         cart = request.session.get('cart', [])
+        
         if action == 'remove':
             idx = int(request.POST.get('index', -1))
             if 0 <= idx < len(cart):
                 del cart[idx]
+                messages.success(request, "محصول از سبد خرید حذف شد.")
+                
+        elif action == 'update':
+            idx = int(request.POST.get('index', -1))
+            qty = int(request.POST.get('qty', 1))
+            if 0 <= idx < len(cart) and qty > 0:
+                cart[idx]['qty'] = qty
+                messages.success(request, "تعداد محصول به‌روزرسانی شد.")
+                
         elif action == 'checkout':
             if not request.user.is_authenticated:
                 messages.warning(request, 'ابتدا وارد شوید')
@@ -360,8 +442,11 @@ class CartView(View):
                 messages.warning(request, get_text(request.session.get('language','fa'), 'register_first'))
                 return redirect('profile')
             return redirect('payment')
+            
         request.session['cart'] = cart
+        request.session.modified = True
         return redirect('cart')
+
 
 class PaymentView(View):
     @method_decorator(login_required)

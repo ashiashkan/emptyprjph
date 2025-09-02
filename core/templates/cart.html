@@ -3,14 +3,38 @@
 <h5 class="mb-3">سبد خرید</h5>
 {% if cart %}
 <table class="table align-middle">
-  <thead><tr><th>کالا</th><th>تعداد</th><th>قیمت</th><th>جمع</th><th></th></tr></thead>
+  <thead>
+    <tr>
+      <th>عکس</th>
+      <th>کالا</th>
+      <th>تعداد</th>
+      <th>قیمت واحد</th>
+      <th>جمع</th>
+      <th></th>
+    </tr>
+  </thead>
   <tbody>
   {% for item in cart %}
     <tr>
+      <td>
+        {% if item.image %}
+          <img src="{{ item.image }}" alt="{{ item.name }}" style="width: 50px; height: 50px; object-fit: cover;">
+        {% else %}
+          <img src="{% static 'images/default.jpg' %}" alt="no image" style="width: 50px; height: 50px; object-fit: cover;">
+        {% endif %}
+      </td>
       <td>{{ item.name }}</td>
-      <td>{{ item.qty }}</td>
+      <td>
+        <form method="post" class="d-inline">{% csrf_token %}
+          <input type="hidden" name="index" value="{{ forloop.counter0 }}">
+          <div class="input-group input-group-sm" style="width: 100px;">
+            <input type="number" name="qty" value="{{ item.qty }}" min="1" class="form-control">
+            <button name="action" value="update" class="btn btn-outline-secondary">تغییر</button>
+          </div>
+        </form>
+      </td>
       <td>${{ item.price }}</td>
-      <td>${{ item.qty|floatformat:0|add:'0'|floatformat:0 }}</td>
+      <td>${{ item.price|floatformat:2 }}</td>
       <td>
         <form method="post" class="d-inline">{% csrf_token %}
           <input type="hidden" name="index" value="{{ forloop.counter0 }}">
@@ -20,14 +44,21 @@
     </tr>
   {% endfor %}
   </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="4" class="text-end fw-bold">جمع کل:</td>
+      <td colspan="2" class="fw-bold">${{ total|floatformat:2 }}</td>
+    </tr>
+  </tfoot>
 </table>
 <div class="d-flex justify-content-between">
-  <div class="fs-5">مبلغ کل: <strong>${{ total }}</strong></div>
+  <a href="{% url 'buy_medicine' %}" class="btn btn-outline-primary">ادامه خرید</a>
   <form method="post">{% csrf_token %}
     <button name="action" value="checkout" class="btn btn-success">ادامه به پرداخت</button>
   </form>
 </div>
 {% else %}
   <div class="alert alert-info">سبد خرید شما خالی است.</div>
+  <a href="{% url 'buy_medicine' %}" class="btn btn-primary">شروع خرید</a>
 {% endif %}
 {% endblock %}
