@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .forms import PhoneLoginForm, RegisterForm, AddressForm, LoginForm
+
 class PhoneLoginForm(forms.Form):
     phone = forms.CharField(label="شماره تلفن", max_length=32)
     password = forms.CharField(label="رمز عبور", widget=forms.PasswordInput)
