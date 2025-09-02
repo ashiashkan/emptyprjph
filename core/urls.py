@@ -1,14 +1,17 @@
 from django.urls import path
+from . import views
 from .views import (
     HomeView, LoginView, RegisterView, LogoutView,
     BuyMedicineView, CartView, PaymentView,
     ProfileView, OrderHistoryView, AdminPanelView,
     GuideView, SupportView, ChangeLanguageView
 )
+app_name = "core"
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('login/', LoginView.as_view(), name='login'),
+    path('checkout/', views.checkout_view, name='checkout'),
     path('register/', RegisterView.as_view(), name='register'),
     path('logout/', LogoutView.as_view(), name='logout'),
 
