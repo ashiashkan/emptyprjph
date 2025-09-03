@@ -1,0 +1,4 @@
+body { background: #f5f7fb; }
+.card { border-radius: 1rem; }
+.navbar { border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; }
+.table { background: white; }
