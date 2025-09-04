@@ -400,17 +400,17 @@ def cart_view(request: HttpRequest) -> HttpResponse:
 
 @require_POST
 @login_required
-def cart_add(request: HttpRequest, item_id: str) -> HttpResponse:
-    _ensure_loaded()
-    if item_id not in _ITEMS_RAW:
-        return HttpResponseBadRequest("Invalid item")
-
-    cart = get_cart(request)
+def cart_add(request, item_id):
     qty = int(request.POST.get("qty", 1))
-    cart[item_id] = cart.get(item_id, 0) + qty
-    save_cart(request, cart)
-    messages.success(request, "Item added to cart")
-    return redirect("cart")
+    # اینجا باید دارو رو پیدا کنیم از دیتای medicines.json
+    item = _ITEMS_RAW.get(str(item_id))
+    if not item:
+        return redirect("buy_medicine")
+
+    cart = request.session.get("cart", {})
+    cart[str(item_id)] = cart.get(str(item_id), 0) + qty
+    request.session["cart"] = cart
+    return redirect("buy_medicine")
 
 @require_POST
 @login_required
