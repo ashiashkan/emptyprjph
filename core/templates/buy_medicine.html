@@ -1,110 +1,106 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
 <div class="container my-5">
 
+  <!-- هدر -->
   <div class="text-center mb-5">
     <h1 class="fw-bold text-primary display-5">💊 داروخانه آنلاین</h1>
-    <p class="text-muted fs-5">جستجو، مشاهده و خرید داروهای معتبر در دسته‌بندی‌های متنوع</p>
-
-    <form method="get" class="row g-2 justify-content-center mt-3">
-      <div class="col-md-6">
-        <input type="text" name="q" value="{{ query }}" class="form-control form-control-lg rounded-pill text-center"
-               placeholder="جستجوی نام دارو / توضیح / کد">
-      </div>
-      <div class="col-md-2">
-        <button class="btn btn-primary btn-lg w-100 rounded-pill">جستجو</button>
-      </div>
-    </form>
+    <p class="text-muted fs-5">جستجو و خرید داروها از گروه‌های مختلف</p>
   </div>
 
+  <!-- جستجو -->
+  <form method="get" class="row g-2 justify-content-center mb-4">
+    <div class="col-md-6">
+      <input type="text" name="q" value="{{ query }}" 
+             class="form-control form-control-lg rounded-pill text-center shadow-sm"
+             placeholder="🔍 جستجوی نام یا توضیح دارو">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary btn-lg w-100 rounded-pill">جستجو</button>
+    </div>
+  </form>
+
+  <!-- آکاردئون گروه‌ها -->
   <div class="accordion" id="medicineAccordion">
     {% for group in groups %}
-      <div class="accordion-item mb-4 border-0 shadow rounded-3 overflow-hidden">
+      <div class="accordion-item border-0 shadow-sm mb-3 rounded-3 overflow-hidden">
         <h2 class="accordion-header" id="heading-{{ group.key }}">
-          <button class="accordion-button collapsed fw-bold bg-gradient bg-primary text-white fs-5 py-3"
-                  type="button" data-bs-toggle="collapse" 
-                  data-bs-target="#collapse-{{ group.key }}" 
-                  aria-expanded="false" 
+          <button class="accordion-button collapsed fw-bold bg-light" 
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse-{{ group.key }}"
+                  aria-expanded="false"
                   aria-controls="collapse-{{ group.key }}">
             {{ group.name }}
           </button>
         </h2>
 
-        <div id="collapse-{{ group.key }}" class="accordion-collapse collapse" 
-             aria-labelledby="heading-{{ group.key }}" data-bs-parent="#medicineAccordion">
-          <div class="accordion-body bg-light">
+        <div id="collapse-{{ group.key }}" 
+             class="accordion-collapse collapse" 
+             aria-labelledby="heading-{{ group.key }}"
+             data-bs-parent="#medicineAccordion">
+          <div class="accordion-body bg-white">
             <div class="row g-4">
               {% for variant in group.variants %}
                 <div class="col-xl-3 col-lg-4 col-md-6">
-                  <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
+                  <div class="card h-100 border-0 shadow hover-card rounded-4 overflow-hidden">
                     <div class="position-relative">
                       {% if variant.image %}
-                        <img src="{% static variant.image %}" class="card-img-top img-fluid product-img" alt="{{ variant.name }}">
+                        <img src="{% static variant.image %}" class="card-img-top product-img" alt="{{ variant.name }}">
                       {% else %}
-                        <img src="{% static 'images/default.jpg' %}" class="card-img-top img-fluid product-img" alt="{{ variant.name }}">
+                        <img src="{% static 'images/default.jpg' %}" class="card-img-top product-img" alt="{{ variant.name }}">
                       {% endif %}
-                      <span class="badge bg-success position-absolute top-0 end-0 m-2 shadow px-3 py-2 fs-6 rounded-pill">
+                      <span class="badge bg-success position-absolute top-0 end-0 m-2 shadow fs-6 px-3 py-2 rounded-pill">
                         ${{ variant.price }}
                       </span>
                     </div>
-
                     <div class="card-body d-flex flex-column">
-                      <h5 class="card-title fw-bold text-dark">
-                        <a href="{% url 'medicine_detail' variant.id %}" class="link-dark text-decoration-none">
+                      <h5 class="card-title fw-bold">
+                        <a href="{% url 'medicine_detail' variant.id %}" class="stretched-link text-decoration-none text-dark">
                           {{ variant.name }}
                         </a>
                       </h5>
-                      <p class="card-text text-muted small mb-3">{{ variant.description|default:"بدون توضیحات" }}</p>
-
-                      <p class="fw-bold text-primary mb-2 fs-5">💵 ${{ variant.price }}</p>
-
-                      <form method="post" action="{% url 'cart_add' variant.id %}" class="mt-auto">
-                        {% csrf_token %}
-                        <div class="input-group input-group-sm mb-2">
-                          <input type="number" name="qty" value="1" min="1" class="form-control text-center rounded-pill">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm fw-bold">
-                          🛒 افزودن به سبد خرید
-                        </button>
-                      </form>
+                      <p class="card-text text-muted small">{{ variant.description|default:"بدون توضیح" }}</p>
+                      <div class="mt-auto">
+                        <form method="post" action="{% url 'cart_add' variant.id %}">
+                          {% csrf_token %}
+                          <div class="input-group input-group-sm mb-2">
+                            <input type="number" name="qty" value="1" min="1" 
+                                   class="form-control text-center rounded-pill">
+                          </div>
+                          <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                            🛒 افزودن به سبد
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>
               {% empty %}
-                <p class="text-center text-muted m-0">هیچ محصولی در این گروه موجود نیست.</p>
+                <p class="text-center text-muted">هیچ محصولی در این گروه موجود نیست.</p>
               {% endfor %}
             </div>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-danger text-center fw-bold fs-4">هیچ گروه دارویی یافت نشد.</p>
+      <p class="text-center text-danger">هیچ گروهی یافت نشد.</p>
     {% endfor %}
   </div>
 
-  {% if groups.paginator.num_pages > 1 %}
-  <nav class="mt-4">
-    <ul class="pagination justify-content-center">
-      {% if groups.has_previous %}
-      <li class="page-item"><a class="page-link" href="?page={{ groups.previous_page_number }}&q={{ query }}">قبلی</a></li>
-      {% endif %}
-      <li class="page-item disabled"><span class="page-link">صفحه {{ groups.number }} از {{ groups.paginator.num_pages }}</span></li>
-      {% if groups.has_next %}
-      <li class="page-item"><a class="page-link" href="?page={{ groups.next_page_number }}&q={{ query }}">بعدی</a></li>
-      {% endif %}
-    </ul>
-  </nav>
-  {% endif %}
+
 
 </div>
 
 <style>
   .hover-card { transition: transform .2s ease, box-shadow .2s ease; }
-  .hover-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,.12); }
+  .hover-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,.15); }
   .product-img { height: 200px; object-fit: cover; }
-  .accordion-button:not(.collapsed){ background: linear-gradient(135deg,#0d6efd,#0b5ed7)!important; color:#fff!important; }
-  .accordion-button:focus { box-shadow: none!important; }
+  .accordion-button:not(.collapsed) { 
+    background-color: #0d6efd; 
+    color: #fff; 
+    font-weight: bold; 
+  }
 </style>
 {% endblock %}

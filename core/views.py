@@ -225,17 +225,17 @@ def localize_group(group_key: str, lang: str) -> Optional[LocalizedGroup]:
     graw = _GROUPS_RAW.get(group_key)
     if not graw:
         return None
-    # نام گروه با ترجمه داخل خود گروه
-    name = graw["raw"].get(f"name_{lang}") or _pick_name(graw["raw"]) or group_key
+    name = graw["raw"].get(f"name_{lang}") or graw.get("name") or group_key
+
     variants: List[LocalizedItem] = []
-    for vid, v in _ITEMS_RAW.items():
-        if v.get("group_key") == group_key:
+    for vid, vraw in _ITEMS_RAW.items():
+        if vraw.get("group_key") == group_key:
             li = localize_item(vid, lang)
             if li:
                 variants.append(li)
-    # مرتب‌سازی: اول بر اساس نام، سپس قیمت
-    variants.sort(key=lambda x: (x.name.lower(), x.price))
-    return LocalizedGroup(key=group_key, id=group_key, name=name, variants=variants)
+
+    return LocalizedGroup(key=group_key, name=name, variants=variants)
+
 
 def get_translation(key: str, lang: str) -> str:
     return _TRANSLATIONS.get(key, {}).get(lang, key)
@@ -320,24 +320,17 @@ def buy_medicine(request: HttpRequest) -> HttpResponse:
         messages.success(request, "به سبد خرید افزوده شد.")
         return redirect("buy_medicine")
 
-    query = request.GET.get("q", "").strip().lower()
-
-    groups: List[LocalizedGroup] = []
+    # فیلتر جستجو
+    query = request.GET.get("q", "").strip()
+    groups = []
     for gkey in _GROUPS_RAW.keys():
         loc_group = localize_group(gkey, lang)
-        if not loc_group:
-            continue
-        if query:
-            filtered = [
-                v for v in loc_group.variants
-                if (query in v.name.lower() or query in v.description.lower() or query in v.id.lower())
-            ]
-            if not filtered:
-                continue
-            loc_group.variants = filtered
-        # فقط گروه‌هایی که آیتم دارند
-        if loc_group.variants:
-            groups.append(loc_group)
+        if loc_group:
+            if query:
+                if any(query.lower() in v.name.lower() for v in loc_group.variants):
+                    groups.append(loc_group)
+            else:
+                groups.append(loc_group)
 
     # مرتب‌سازی گروه‌ها بر اساس نام
     groups.sort(key=lambda g: g.name)
@@ -347,11 +340,8 @@ def buy_medicine(request: HttpRequest) -> HttpResponse:
     page_obj = paginator.get_page(page_number)
 
     context = {
-        "groups": page_obj,
+        "groups": groups,
         "query": query,
-        "title": get_translation("pharmacy_online", lang),
-        "lang": lang,
-        "page_obj": page_obj,
     }
     return render(request, "buy_medicine.html", context)
 
