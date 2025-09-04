@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-5">
+      {% if item.image %}
+        <img src="{% static item.image %}" alt="{{ item.name }}" class="img-fluid rounded shadow-sm">
+      {% else %}
+        <img src="{% static 'images/default.jpg' %}" alt="no image" class="img-fluid rounded shadow-sm">
+      {% endif %}
+    </div>
+    <div class="col-md-7">
+      <h1 class="h4 fw-bold mb-2">{{ item.name }}</h1>
+      {% if item.exp %}
+        <div class="text-muted mb-2">انقضا: {{ item.exp }}</div>
+      {% endif %}
+      <div class="h5 text-primary mb-3">قیمت: ${{ item.price }}</div>
+      <p class="text-muted">{{ item.description|default:"بدون توضیح" }}</p>
+      <form method="post" action="{% url 'cart_add' item.id %}" class="mt-3">
+        {% csrf_token %}
+        <div class="input-group" style="max-width:220px;">
+          <input type="number" class="form-control text-center" name="qty" value="1" min="1">
+          <button type="submit" class="btn btn-primary">افزودن به سبد</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

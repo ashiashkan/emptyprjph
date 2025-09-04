@@ -1,4 +1,4 @@
-pharma_web/
+emptyprjph/
 ├── manage.py
 ├── pharma_web/
 │   ├── __init__.py
@@ -17,7 +17,9 @@ pharma_web/
 │   ├── views.py
 │   ├── forms.py
 │   ├── templates/
+│   │   ├── admin_panel.html
 │   │   ├── base.html
+│   │   ├── checkout.html
 │   │   ├── login.html
 │   │   ├── admin_panel.html
 │   │   ├── buy_medicine.html
@@ -26,12 +28,13 @@ pharma_web/
 │   │   ├── home.html
 │   │   ├── order_history.html
 │   │   ├── profile.html
+│   │   ├── payment.html
 │   │   ├── register.html
 │   │   ├── support.html
-│   │   
-│   │   
-│   │   
 │   │   └── etc.
+│   │ 
+│   │ 
+│   │   
 │   └── static/
 │       ├── css/
 │       │   └── styles.css  # From _inject_ui_css

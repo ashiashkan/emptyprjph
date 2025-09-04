@@ -1,12 +1,13 @@
 {% load static %}
-<!doctype html>
-<html lang="fa" dir="rtl">
+
+<!DOCTYPE html>
+<html lang="{{ request.session.language|default:'fa' }}" dir="{% if request.session.language|default:'fa' == 'fa' or request.session.language == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pharma Web</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaWeb</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
@@ -26,7 +27,7 @@
         <li class="nav-item"><a class="nav-link" href="{% url 'guide' %}">راهنما</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'support' %}">پشتیبانی</a></li>
       </ul>
-      <form class="d-flex" method="post" action="{% url 'change_language' %}">{% csrf_token %}
+      <form class="d-flex" method="post" action="/lang/">{% csrf_token %}
         <select class="form-select me-2" name="lang" onchange="this.form.submit()">
           {% with current=request.session.language|default:'fa' %}
           <option value="fa" {% if current == 'fa' %}selected{% endif %}>FA</option>
@@ -38,14 +39,14 @@
       </form>
       <ul class="navbar-nav ms-3">
         {% if user.is_authenticated %}
-        <li class="nav-item">
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}
-            <button class="btn btn-light btn-sm">خروج</button>
-          </form>
-        </li>
+          <li class="nav-item">
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+              <button class="nav-link btn btn-link" type="submit">خروج</button>
+            </form>
+          </li>
         {% else %}
-        <li class="nav-item"><a class="btn btn-light btn-sm me-2" href="{% url 'login' %}">ورود</a></li>
-        <li class="nav-item"><a class="btn btn-warning btn-sm" href="{% url 'register' %}">ثبت‌نام</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">ورود</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'register_view' %}">ثبت‌نام</a></li>
         {% endif %}
       </ul>
     </div>
@@ -54,11 +55,11 @@
 
 <div class="container">
   {% for m in messages %}
-    <div class="alert alert-{{ m.tags }}">{% if m|safe %}{{ m }}{% else %}{{ m }}{% endif %}</div>
+    <div class="alert alert-info">{{ m }}</div>
   {% endfor %}
   {% block content %}{% endblock %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

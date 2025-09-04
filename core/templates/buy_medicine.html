@@ -1,148 +1,110 @@
 {% extends "base.html" %}
 {% load static %}
-
 {% block content %}
+
 <div class="container my-5">
 
-  <!-- اطلاع‌رسانی (Toast) -->
-  <div class="toast-container position-fixed top-0 end-0 p-3">
-    {% for message in messages %}
-      <div class="toast align-items-center text-white bg-{{ message.tags }} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-        <div class="d-flex">
-          <div class="toast-body">
-            {{ message }}
-          </div>
-          <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-      </div>
-    {% endfor %}
+  <!-- پیام‌های سیستم -->
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-2" role="alert">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- هدر و جستجو -->
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold text-primary mb-1">💊 داروخانه آنلاین</h1>
+      <div class="text-muted">جستجو، مشاهده و خرید دارو در گروه‌های متنوع</div>
+    </div>
+    <form method="get" class="d-flex" role="search">
+      <input class="form-control me-2" type="search" name="q" value="{{ query }}" placeholder="نام، توضیح یا کُد دارو...">
+      <button class="btn btn-primary" type="submit">جستجو</button>
+    </form>
   </div>
 
-  <!-- عنوان اصلی -->
-  <div class="text-center mb-5">
-    <h1 class="fw-bold text-primary display-5">💊 داروخانه آنلاین</h1>
-    <p class="text-muted fs-5">جستجو، مشاهده و خرید داروهای معتبر در دسته‌بندی‌های متنوع</p>
-  </div>
-
-  <!-- آکاردئون گروه‌های دارویی -->
+  <!-- گروه‌ها -->
   <div class="accordion" id="medicineAccordion">
     {% for group in groups %}
-      <div class="accordion-item mb-4 border-0 shadow rounded-3 overflow-hidden">
-        <h2 class="accordion-header" id="heading-{{ group.id }}">
-          <button class="accordion-button collapsed fw-bold bg-gradient bg-primary text-white fs-5 py-3"
-                  type="button" data-bs-toggle="collapse" 
-                  data-bs-target="#collapse-{{ group.id }}" 
-                  aria-expanded="false" 
-                  aria-controls="collapse-{{ group.id }}">
+      <div class="accordion-item mb-3 rounded-3 overflow-hidden shadow-sm">
+        <h2 class="accordion-header" id="heading-{{ group.key }}">
+          <button class="accordion-button collapsed fw-semibold" type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapse-{{ group.key }}"
+                  aria-expanded="false"
+                  aria-controls="collapse-{{ group.key }}">
             {{ group.name }}
           </button>
         </h2>
 
-        <!-- لیست محصولات -->
-        <div id="collapse-{{ group.id }}" 
-             class="accordion-collapse collapse" 
-             aria-labelledby="heading-{{ group.id }}" 
-             data-bs-parent="#medicineAccordion">
+        <div id="collapse-{{ group.key }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ group.key }}" data-bs-parent="#medicineAccordion">
           <div class="accordion-body bg-light">
-
-            <div class="row g-4">
+            <div class="row g-3">
               {% for variant in group.variants %}
                 <div class="col-xl-3 col-lg-4 col-md-6">
-                  <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-card">
-
-                    <!-- عکس + قیمت -->
-                    <div class="position-relative">
+                  <div class="card h-100 border-0 shadow-sm rounded-3">
+                    <a href="{% url 'medicine_detail' variant.id %}" class="position-relative">
                       {% if variant.image %}
-                        <img src="{{ variant.image }}" 
-                             class="card-img-top img-fluid product-img" 
-                             alt="{{ variant.name }}">
+                        <img src="{% static variant.image %}" class="card-img-top" alt="{{ variant.name }}" style="height:200px; object-fit:cover;">
                       {% else %}
-                        <img src="{% static 'images/default.jpg' %}" 
-                             class="card-img-top img-fluid product-img" 
-                             alt="no image">
+                        <img src="{% static 'images/default.jpg' %}" class="card-img-top" alt="no image" style="height:200px; object-fit:cover;">
                       {% endif %}
-                      <span class="badge bg-success position-absolute top-0 end-0 m-2 shadow px-3 py-2 fs-6 rounded-pill">
-                        ${{ variant.price }}
-                      </span>
-                    </div>
-
-                    <!-- بدنه کارت -->
+                      <span class="badge bg-success position-absolute top-0 end-0 m-2 px-3 py-2">${{ variant.price }}</span>
+                    </a>
                     <div class="card-body d-flex flex-column">
-                      <h5 class="card-title fw-bold text-dark">{{ variant.name }}</h5>
-                      <p class="card-text text-muted small mb-3">
-                        {{ variant.description|default:"بدون توضیحات" }}
-                      </p>
-
-                      <!-- قیمت -->
-                      <p class="fw-bold text-primary mb-2 fs-5">
-                        💵 ${{ variant.price }}
-                      </p>
-
-                      <!-- فرم افزودن به سبد خرید -->
-                      <form method="post" class="mt-auto">
-                        {% csrf_token %}
-                        <input type="hidden" name="variant_id" value="{{ variant.id }}">
-                        <div class="input-group input-group-sm mb-2">
-                          <input type="number" name="qty" value="1" min="1" 
-                                 class="form-control text-center rounded-pill">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 rounded-pill shadow-sm fw-bold">
-                          🛒 افزودن به سبد خرید
-                        </button>
-                      </form>
+                      <h5 class="card-title fs-6 fw-bold mb-1">{{ variant.name }}</h5>
+                      <p class="card-text text-muted small mb-2">{{ variant.description|default:"بدون توضیحات" }}</p>
+                      {% if variant.exp %}
+                        <div class="text-muted small mb-2">انقضا: {{ variant.exp }}</div>
+                      {% endif %}
+                      <div class="mt-auto">
+                        <form method="post" action="{% url 'cart_add' variant.id %}">
+                          {% csrf_token %}
+                          <div class="input-group input-group-sm mb-2">
+                            <input type="number" class="form-control text-center" name="qty" value="1" min="1">
+                          </div>
+                          <button type="submit" class="btn btn-primary w-100">🛒 افزودن به سبد</button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>
               {% empty %}
-                <p class="text-center text-muted">هیچ محصولی در این گروه موجود نیست.</p>
+                <div class="text-center text-muted py-4">آیتمی در این گروه موجود نیست.</div>
               {% endfor %}
             </div>
-
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-danger text-center fw-bold fs-4">هیچ گروه دارویی یافت نشد.</p>
+      <div class="alert alert-warning text-center">هیچ گروهی جهت نمایش یافت نشد.</div>
     {% endfor %}
   </div>
+
+  <!-- صفحه‌بندی -->
+  {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-4">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ query }}&page={{ page_obj.previous_page_number }}">قبلی</a>
+          </li>
+        {% endif %}
+        {% for i in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+            <a class="page-link" href="?q={{ query }}&page={{ i }}">{{ i }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?q={{ query }}&page={{ page_obj.next_page_number }}">بعدی</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+
 </div>
-
-<!-- استایل اختصاصی -->
-<style>
-  /* کارت محصولات */
-  .hover-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-  }
-  .hover-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0px 12px 30px rgba(0,0,0,0.2);
-  }
-
-  /* عکس محصول */
-  .product-img {
-    height: 200px;
-    object-fit: cover;
-  }
-
-  /* آکاردئون */
-  .accordion-button:not(.collapsed) {
-    background: linear-gradient(135deg, #0d6efd, #0b5ed7) !important;
-    color: #fff !important;
-    font-size: 1.1rem;
-  }
-  .accordion-button:focus {
-    box-shadow: none !important;
-  }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- اسکریپت فعال‌سازی toast -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-    var toastList = toastElList.map(function(toastEl) {
-      return new bootstrap.Toast(toastEl)
-    })
-    toastList.forEach(toast => toast.show())
-  });
-</script>
 {% endblock %}
