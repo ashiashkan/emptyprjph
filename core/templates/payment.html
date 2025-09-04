@@ -1,56 +1,37 @@
-{% extends "core/base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="row">
-  <div class="col-md-8">
-    <div class="card p-3">
-      <h4>پرداخت — سفارش #{{ order.order_id }}</h4>
-      <p>مبلغ: <strong>${{ order.amount_usd }}</strong> — ارز انتخاب‌شده: <strong>{{ order.currency }}</strong></p>
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card p-3">
+        <h4 class="mb-3">پرداخت — سفارش #{{ order.order_id }}</h4>
+        <p>مبلغ: <strong>${{ order.amount_usd }}</strong> — ارز: <strong>{{ order.currency }}</strong></p>
 
-      <h6>آیتم‌ها</h6>
-      <ul>
-        {% for it in items %}
-          <li>{{ it.name }} — تعداد: {{ it.quantity }} — قیمت واحد: ${{ it.unit_price }}</li>
-        {% endfor %}
-      </ul>
+        <h6 class="mt-4">آیتم‌ها</h6>
+        <ul class="mb-4">
+          {% for it in items %}
+            <li>{{ it.name }} — تعداد: {{ it.quantity }} — قیمت واحد: ${{ it.unit_price }}</li>
+          {% endfor %}
+        </ul>
 
-      <div class="mt-3">
-        <p>آدرس واریز:</p>
-        <pre style="word-break:break-all; background:rgba(0,0,0,0.1); padding:10px; border-radius:6px;">{{ order.deposit_address }}</pre>
-        <img src="data:image/png;base64,{{ qr_b64 }}" class="qr" alt="QR">
-      </div>
-
-      <div class="mt-3">
-        <button id="checkBtn" class="btn btn-success">بررسی پرداخت</button>
-        <div id="checkResult" style="margin-top:10px;"></div>
+        <div class="mt-3">
+          <p class="mb-1">آدرس واریز:</p>
+          <pre class="bg-light p-3 rounded" style="word-break:break-all;">{{ order.deposit_address }}</pre>
+          <div class="text-muted small">* آدرس آزمایشی است.</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="col-md-4">
-    <div class="invoice-right p-3">
-      <h5>فاکتور</h5>
-      <p>سفارش: <strong>{{ order.order_id }}</strong></p>
-      <p>وضعیت: <strong>{{ order.get_status_display }}</strong></p>
-      <p>زمان: {{ order.created_at }}</p>
-      <hr>
-      <p>مبلغ کل: <strong>${{ order.amount_usd }}</strong></p>
+    <div class="col-lg-4">
+      <div class="card p-3">
+        <h5>فاکتور</h5>
+        <p>شناسه: <strong>{{ order.order_id }}</strong></p>
+        <p>وضعیت: <strong>{{ order.get_status_display }}</strong></p>
+        <p>زمان: {{ order.created_at }}</p>
+        <hr>
+        <p>مبلغ کل: <strong>${{ order.amount_usd }}</strong></p>
+      </div>
     </div>
   </div>
 </div>
-
-<script>
-document.getElementById('checkBtn').addEventListener('click', function(){
-  const url = "{% url 'core:check_payment' order_id=order.order_id %}";
-  fetch(url, {method:'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'}})
-    .then(r=>r.json()).then(data=>{
-      const out = document.getElementById('checkResult');
-      if(data.paid){
-        out.innerHTML = '<div class="alert alert-success">پرداخت تأیید شد. ممنون!</div>';
-        // می‌توانیم بعد از پرداخت کلاینت را به صفحه موفقیت ارجاع دهیم
-      } else {
-        out.innerHTML = '<div class="alert alert-warning">هنوز پرداخت تأیید نشده. وضعیت: ' + (data.status || 'PENDING') + '</div>';
-      }
-    })
-});
-</script>
 {% endblock %}

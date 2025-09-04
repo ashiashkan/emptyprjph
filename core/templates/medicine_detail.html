@@ -5,23 +5,23 @@
   <div class="row g-4">
     <div class="col-md-5">
       {% if item.image %}
-        <img src="{% static item.image %}" alt="{{ item.name }}" class="img-fluid rounded shadow-sm">
+        <img src="{% static item.image %}" class="img-fluid rounded shadow-sm" alt="{{ item.name }}">
       {% else %}
-        <img src="{% static 'images/default.jpg' %}" alt="no image" class="img-fluid rounded shadow-sm">
+        <img src="{% static 'images/default.jpg' %}" class="img-fluid rounded shadow-sm" alt="{{ item.name }}">
       {% endif %}
     </div>
     <div class="col-md-7">
-      <h1 class="h4 fw-bold mb-2">{{ item.name }}</h1>
-      {% if item.exp %}
-        <div class="text-muted mb-2">انقضا: {{ item.exp }}</div>
-      {% endif %}
-      <div class="h5 text-primary mb-3">قیمت: ${{ item.price }}</div>
-      <p class="text-muted">{{ item.description|default:"بدون توضیح" }}</p>
-      <form method="post" action="{% url 'cart_add' item.id %}" class="mt-3">
+      <h1 class="h3 fw-bold">{{ item.name }}</h1>
+      <p class="text-muted">{{ item.description|default:"بدون توضیحات" }}</p>
+      {% if item.exp %}<p class="small text-secondary">تاریخ/انقضا: {{ item.exp }}</p>{% endif %}
+      <div class="d-flex align-items-center gap-3 my-3">
+        <span class="badge bg-success fs-6">قیمت: ${{ item.price }}</span>
+      </div>
+      <form method="post" action="{% url 'cart_add' item.id %}">
         {% csrf_token %}
-        <div class="input-group" style="max-width:220px;">
-          <input type="number" class="form-control text-center" name="qty" value="1" min="1">
-          <button type="submit" class="btn btn-primary">افزودن به سبد</button>
+        <div class="input-group mb-3" style="max-width:220px;">
+          <input type="number" name="qty" value="1" min="1" class="form-control text-center">
+          <button class="btn btn-primary">🛒 افزودن به سبد</button>
         </div>
       </form>
     </div>

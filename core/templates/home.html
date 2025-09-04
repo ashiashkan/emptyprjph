@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="p-4 bg-white rounded shadow-sm">
-  <h1 class="h4">به PharmaWeb خوش آمدید 🌿</h1>
-  <p class="text-muted">یک فروشگاه تستی دانشگاهی برای خرید دارو با پرداخت ارز دیجیتال (نمایشی).</p>
-  <a class="btn btn-primary" href="{% url 'buy_medicine' %}">شروع خرید</a>
+<div class="container my-5">
+  <div class="p-5 bg-white rounded-4 shadow-sm text-center">
+    <h1 class="h3 mb-3">به PharmaWeb خوش آمدید 🌿</h1>
+    <p class="text-muted mb-4">فروشگاه تستی برای خرید دارو با پرداخت رمزارز (دموی آموزشی).</p>
+    <a class="btn btn-primary btn-lg rounded-pill" href="{% url 'buy_medicine' %}">شروع خرید</a>
+  </div>
 </div>
 {% endblock %}
