@@ -21,6 +21,24 @@
     </div>
   </form>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".qty-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const input = this.parentElement.querySelector(".qty-input");
+      let value = parseInt(input.value) || 1;
+      if (this.dataset.action === "increase") {
+        value++;
+      } else if (this.dataset.action === "decrease" && value > 1) {
+        value--;
+      }
+      input.value = value;
+    });
+  });
+});
+</script>
+
+
   <!-- آکاردئون گروه‌ها -->
   <div class="accordion" id="medicineAccordion">
     {% for group in groups %}
@@ -66,12 +84,12 @@
                      <!-- فرم افزودن به سبد -->
                      <form method="post" action="{% url 'cart_add' variant.id %}" class="mt-auto">
                        {% csrf_token %}
-                       <div class="input-group mb-2">
-                         <button class="btn btn-outline-secondary" type="button" onclick="this.previousElementSibling.stepUp()">+</button>
-                         <input type="number" name="qty" value="1" min="1" 
-                         class="form-control text-center" style="max-width:70px;">
-                         <button class="btn btn-outline-secondary" type="button" onclick="this.nextElementSibling.stepDown()">-</button>
-                       </div>
+                          <div class="input-group mb-2">
+                            <button type="button" class="btn btn-outline-secondary qty-btn" data-action="decrease">-</button>
+                            <input type="number" name="qty" value="1" min="1" 
+                                   class="form-control text-center qty-input" style="max-width:70px;">
+                            <button type="button" class="btn btn-outline-secondary qty-btn" data-action="increase">+</button>
+                          </div>
                        <button type="submit" class="btn btn-primary w-100 rounded-pill">
                          🛒 افزودن به سبد
                        </button>
