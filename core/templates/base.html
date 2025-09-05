@@ -19,7 +19,14 @@
     <div class="collapse navbar-collapse" id="nav">
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link" href="{% url 'buy_medicine' %}">خرید دارو</a></li>
-        <li class="nav-item"><a class="nav-link" href="{% url 'cart' %}">سبد خرید</a></li>
+        <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1080;">
+          <div id="cartToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+            <div class="toast-header">
+              <strong class="me-auto">سبد خرید</strong>
+              <small>هم‌اکنون</small>
+              <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="cartToastBody">
         {% if user.is_authenticated %}
           <li class="nav-item"><a class="nav-link" href="{% url 'order_history' %}">سفارش‌ها</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}">پروفایل</a></li>

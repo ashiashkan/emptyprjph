@@ -9,6 +9,19 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from decimal import Decimal
 
+
+class Cart(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)
+    product_id = models.CharField(max_length=200)  # یا ForeignKey به مدل محصول شما
+    name = models.CharField(max_length=255, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantity = models.PositiveIntegerField(default=1)
+
+
 class CustomUserManager(UserManager):
     def _create_user(self, phone, password, **extra_fields):
         """

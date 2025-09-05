@@ -88,8 +88,8 @@ document.addEventListener("DOMContentLoaded", function () {
                             <button type="button" class="btn btn-outline-secondary qty-btn me-2" data-action="decrease">-</button>
                                   <input type="number" name="qty" value="1" min="1" class="form-control text-center qty-input" style="max-width:70px;">
                                   <button type="button" class="btn btn-outline-secondary qty-btn me-2" data-action="increase">+</button>
-                                  <button type="submit" class="btn btn-primary w-100 rounded-pill">
-                                    🛒 افزودن به سبد
+                                  <button class="btn btn-primary add-to-cart" data-product-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}">
+                                    افزودن به سبد خرید
                                   </button>
                           </div>
                      </form>
