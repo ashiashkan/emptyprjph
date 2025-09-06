@@ -1,11 +1,53 @@
 {% extends 'base.html' %}
 {% block content %}
-<h5 class="mb-3">پروفایل</h5>
-<form method="post" class="card p-3 shadow-sm">{% csrf_token %}
-  <div class="mb-3">
-    <label class="form-label">آدرس</label>
-    <textarea name="address" class="form-control" rows="3">{{ request.user.address }}</textarea>
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0 rounded-4">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-4 text-primary">مدیریت پروفایل کاربری</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">شماره موبایل</label>
+              <input type="text" class="form-control rounded-3" value="{{ form.phone.value }}" disabled>
+              <small class="text-muted">شماره تلفن قابل تغییر نیست</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نام</label>
+              <input type="text" name="first_name" class="form-control rounded-3" 
+                     value="{{ form.first_name.value|default:'' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">نام خانوادگی</label>
+              <input type="text" name="last_name" class="form-control rounded-3" 
+                     value="{{ form.last_name.value|default:'' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">ایمیل</label>
+              <input type="email" name="email" class="form-control rounded-3" 
+                     value="{{ form.email.value|default:'' }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label">آدرس</label>
+              <textarea name="address" class="form-control rounded-3" rows="3" 
+                        maxlength="500">{{ form.address.value|default:'' }}</textarea>
+              <small class="text-muted">حداکثر 500 کاراکتر</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">زبان</label>
+              <select name="language" class="form-select rounded-3">
+                <option value="fa" {% if form.language.value == 'fa' %}selected{% endif %}>فارسی</option>
+                <option value="en" {% if form.language.value == 'en' %}selected{% endif %}>English</option>
+                <option value="tr" {% if form.language.value == 'tr' %}selected{% endif %}>Türkçe</option>
+                <option value="ar" {% if form.language.value == 'ar' %}selected{% endif %}>العربية</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary w-100 mt-4 py-2 rounded-3 fw-bold">ذخیره تغییرات</button>
+        </form>
+      </div>
+    </div>
   </div>
-  <button class="btn btn-primary">ذخیره</button>
-</form>
+</div>
 {% endblock %}

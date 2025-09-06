@@ -8,10 +8,17 @@ import uuid
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from decimal import Decimal
+from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.utils.translation import gettext_lazy as _
+import re
+from eth_typing import ValidationError
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 
 
 class Cart(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.CASCADE)
+    session_key = models.CharField(max_length=40, null=True, blank=True)  # اضافه
     created = models.DateTimeField(auto_now_add=True)
 
 class CartItem(models.Model):
@@ -21,14 +28,26 @@ class CartItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     quantity = models.PositiveIntegerField(default=1)
 
+class Customer(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')
+    phone = models.CharField(max_length=32, unique=True)
+    first_name = models.CharField(max_length=120, blank=True)
+    last_name = models.CharField(max_length=120, blank=True)
+    address = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-class CustomUserManager(UserManager):
+    def __str__(self):
+        return self.phone or self.user.phone
+
+class CustomUserManager(BaseUserManager):
     def _create_user(self, phone, password, **extra_fields):
-        """
-        ایجاد کاربر با phone به جای username.
-        """
         if not phone:
             raise ValueError('The given phone must be set')
+        
+        # اعتبارسنجی شماره تلفن
+        if not re.match(r'^\+?1?\d{9,15}$', phone):
+            raise ValueError('Phone number must be entered in the format: "+999999999". Up to 15 digits allowed.')
+            
         user = self.model(phone=phone, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -42,37 +61,44 @@ class CustomUserManager(UserManager):
     def create_superuser(self, phone, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
+        
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
+            
         return self._create_user(phone, password, **extra_fields)
 
+
+
 class CustomUser(AbstractUser):
-    username = None  # غیرفعال کردن فیلد پیش‌فرض username
-    phone = models.CharField(max_length=15, unique=True)
-    address = models.TextField(blank=True, null=True)
+    username = None
+    phone = models.CharField(
+        max_length=15, 
+        unique=True,
+        validators=[RegexValidator(r'^\+?1?\d{9,15}$','Phone number must be entered in the format: "+999999999". Up to 15 digits allowed.')]
+    )
+    address = models.TextField(max_length=500, blank=True, null=True)
     language = models.CharField(max_length=5, default='fa')
     logout_history = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    objects = CustomUserManager()  # استفاده از مدیر جدید
+    objects = CustomUserManager()
 
-    USERNAME_FIELD = 'phone'  # استفاده از phone برای احراز هویت
+    USERNAME_FIELD = 'phone'
     REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.phone
 
-class Customer(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')
-    phone = models.CharField(max_length=32, unique=True)
-    first_name = models.CharField(max_length=120, blank=True)
-    last_name = models.CharField(max_length=120, blank=True)
-    address = models.TextField(blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return self.phone or self.user.username
+    def clean(self):
+        super().clean()
+        # اعتبارسنجی شماره تلفن
+        if not re.match(r'^\+?1?\d{9,15}$', self.phone):
+            raise ValidationError({
+                'phone': 'Phone number must be entered in the format: "+999999999". Up to 15 digits allowed.'
+            })
 
 PAYMENT_CHOICES = [
     ('TRX', 'TRX'),

@@ -1,37 +1,79 @@
-{% extends "core/base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="row">
-  <div class="col-md-8">
-    <h4>خلاصه سفارش</h4>
-    <ul class="list-group mb-3">
-      {% for it in cart %}
-        <li class="list-group-item d-flex justify-content-between">
-          <div>
-            <h6>{{ it.name }}</h6>
-            <small class="muted">تعداد: {{ it.qty }}</small>
-          </div>
-          <div>${{ it.price }}</div>
-        </li>
-      {% endfor %}
-    </ul>
-    <p class="text-end"><strong>مجموع: ${{ total }}</strong></p>
-  </div>
-
-  <div class="col-md-4">
-    <div class="card p-3">
-      <h5>انتخاب روش پرداخت</h5>
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-2">
-          <select name="currency" class="form-select">
-            {% for c in payment_options %}
-              <option value="{{ c }}">{{ c }}</option>
-            {% endfor %}
-          </select>
+<div class="container my-5">
+    <h2>تکمیل خرید</h2>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>اطلاعات کاربر</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>نام:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                    <p><strong>تلفن:</strong> {{ user.phone }}</p>
+                    <p><strong>آدرس:</strong> {{ user.address }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5>سبد خرید</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>محصول</th>
+                                <th>تعداد</th>
+                                <th>قیمت واحد</th>
+                                <th>جمع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.qty }}</td>
+                                <td>${{ item.price }}</td>
+                                <td>${{ item.qty|multiply:item.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3">مجموع:</th>
+                                <th>${{ total }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary w-100">ایجاد سفارش و رفتن به پرداخت</button>
-      </form>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>انتخاب روش پرداخت</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">ارز پرداخت</label>
+                            <select name="currency" class="form-select" required>
+                                <option value="USDT">USDT</option>
+                                <option value="TRX">TRX</option>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                                <option value="BNB">BNB</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">پرداخت</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}

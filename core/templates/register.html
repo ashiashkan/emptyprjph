@@ -2,30 +2,47 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title mb-3">ثبت‌نام</h5>
+    <div class="card shadow-sm border-0 rounded-4">
+      <div class="card-body p-4">
+        <h5 class="card-title mb-4 text-center text-primary">ایجاد حساب کاربری جدید</h5>
         <form method="post">{% csrf_token %}
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-phone">شماره موبایل</label>
-              <input type="text" name="phone" class="form-control" required>
+              <label class="form-label">شماره موبایل</label>
+              <input type="text" name="phone" class="form-control rounded-3" required 
+                     placeholder="مثال: 09123456789">
+              {% if form.phone.errors %}
+                <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+              {% endif %}
             </div>
             <div class="col-md-6">
-              <label class="form-password1">رمز عبور</label>
-              <input type="password" name="password1" class="form-control" required>
+              <label class="form-label">نام</label>
+              <input type="text" name="first_name" class="form-control rounded-3" required>
             </div>
             <div class="col-md-6">
-              <label class="form-password2">تکرار رمز عبور</label>
-              <input type="password" name="password2" class="form-control" required>
+              <label class="form-label">نام خانوادگی</label>
+              <input type="text" name="last_name" class="form-control rounded-3" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">ایمیل (اختیاری)</label>
+              <input type="email" name="email" class="form-control rounded-3">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رمز عبور</label>
+              <input type="password" name="password1" class="form-control rounded-3" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تکرار رمز عبور</label>
+              <input type="password" name="password2" class="form-control rounded-3" required>
             </div>
             <div class="col-12">
-              <label class="form-address">آدرس</label>
-              <textarea name="address" class="form-control" rows="2"></textarea>
+              <label class="form-label">آدرس</label>
+              <textarea name="address" class="form-control rounded-3" rows="2" 
+                        placeholder="حداکثر 500 کاراکتر"></textarea>
             </div>
             <div class="col-md-4">
-              <label class="form-language">زبان</label>
-              <select name="language" class="form-select">
+              <label class="form-label">زبان</label>
+              <select name="language" class="form-select rounded-3">
                 <option value="fa" selected>فارسی</option>
                 <option value="en">English</option>
                 <option value="tr">Türkçe</option>
@@ -33,7 +50,7 @@
               </select>
             </div>
           </div>
-          <button class="btn btn-success w-100 mt-3">ایجاد حساب</button>
+          <button class="btn btn-success w-100 mt-4 py-2 rounded-3 fw-bold">ایجاد حساب</button>
         </form>
       </div>
     </div>

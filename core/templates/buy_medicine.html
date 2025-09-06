@@ -74,25 +74,33 @@ document.addEventListener("DOMContentLoaded", function () {
                      </span>
                    </div>
                    <div class="card-body d-flex flex-column">
-                     <h5 class="card-title fw-bold">
-                       <a href="{% url 'medicine_detail' variant.id %}" 
-                          class="stretched-link text-decoration-none text-dark">
-                         {{ variant.name }}
-                       </a>
-                     </h5>
+                    <h5 class="card-title fw-bold">
+                        {% if variant.id %}
+                          <a href="{% url 'medicine_detail' variant.id %}" 
+                             class="stretched-link text-decoration-none text-dark">
+                            {{ variant.name }}
+                          </a>
+                        {% else %}
+                          <span class="text-dark">{{ variant.name }}</span>
+                        {% endif %}
+                      </h5>
                      <p class="card-text text-muted small">{{ variant.description|default:"بدون توضیح" }}</p>
                      <!-- فرم افزودن به سبد -->
-                     <form method="post" action="{% url 'cart_add' variant.id %}" class="mt-auto">
-                       {% csrf_token %}
-                          <div class="input-group mb-2">
-                            <button type="button" class="btn btn-outline-secondary qty-btn me-2" data-action="decrease">-</button>
-                                  <input type="number" name="qty" value="1" min="1" class="form-control text-center qty-input" style="max-width:70px;">
-                                  <button type="button" class="btn btn-outline-secondary qty-btn me-2" data-action="increase">+</button>
-                                  <button class="btn btn-primary add-to-cart" data-product-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}">
-                                    افزودن به سبد خرید
-                                  </button>
-                          </div>
-                     </form>
+                     <form method="post" action="{% url 'cart_add' item_id=variant.id %}">  <!-- اضافه action -->
+                    {% csrf_token %}
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="decrementQty(this)">-</button>
+                        <input type="number" name="qty" value="1" min="1" class="w-12 text-center">
+                        <button type="button" onclick="incrementQty(this)">+</button>
+                        <form method="post" action="{% url 'cart_add' variant.id %}">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <input type="number" name="qty" value="1" min="1" class="form-control">
+                        <button type="submit" class="btn btn-primary">افزودن به سبد</button>
+                    </div>
+                    </form>
+                        </div>
+                    </form>
                    </div>
                  </div>
                </div>
@@ -108,7 +116,16 @@ document.addEventListener("DOMContentLoaded", function () {
     {% endfor %}
   </div>
 
-
+<script>
+function decrementQty(btn) {
+    let input = btn.nextElementSibling;
+    if (parseInt(input.value) > 1) input.value--;
+}
+function incrementQty(btn) {
+    let input = btn.previousElementSibling;
+    input.value = parseInt(input.value) + 1;
+}
+</script>
 
 </div>
 
